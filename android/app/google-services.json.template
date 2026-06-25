@@ -1,0 +1,22 @@
+{
+  "_comment": "TEMPLATE — download the real file from Firebase Console and save it as android/app/google-services.json. Project settings > General > Your apps > Android app > google-services.json. The package name MUST be com.prynt.app.",
+  "project_info": {
+    "project_number": "REPLACE_SENDER_ID",
+    "project_id": "REPLACE_PROJECT_ID",
+    "storage_bucket": "REPLACE_PROJECT_ID.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "REPLACE_APP_ID",
+        "android_client_info": {
+          "package_name": "com.prynt.app"
+        }
+      },
+      "api_key": [
+        { "current_key": "REPLACE_ANDROID_API_KEY" }
+      ]
+    }
+  ],
+  "configuration_version": "1"
+}
