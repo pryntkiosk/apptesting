@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1059639957857",
+    "project_id": "prynt-app",
+    "storage_bucket": "prynt-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1059639957857:android:08c3cab0c47721af0fcd20",
+        "android_client_info": {
+          "package_name": "com.prynt.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXO4w3GeV4FKBOpFyB7MHtcmyAcVSS37Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
