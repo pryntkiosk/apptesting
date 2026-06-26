@@ -47,7 +47,6 @@ jobs:
           from PIL import Image
           import os
 
-          # Look for logo in multiple possible locations
           candidates = [
               "assets/logo.png",
               "assets/logo.jpg",
@@ -82,7 +81,6 @@ jobs:
           for path, size in sizes.items():
               os.makedirs(os.path.dirname(path), exist_ok=True)
               resized = img.resize((size, size), Image.LANCZOS)
-              # White background for solid icons
               bg = Image.new("RGBA", (size, size), (255, 255, 255, 255))
               bg.paste(resized, (0, 0), resized)
               bg.convert("RGB").save(path, "PNG")
