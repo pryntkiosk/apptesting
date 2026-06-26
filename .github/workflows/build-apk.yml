@@ -40,9 +40,44 @@ jobs:
             --platforms android \
             . 2>&1 || true
 
+      - name: Generate app icons from logo
+        run: |
+          pip install Pillow --quiet
+          python3 << 'PYEOF'
+          from PIL import Image
+          import os
+
+          src = "assets/logo.png"
+          if not os.path.exists(src):
+              print("No logo.png found in assets/, skipping icon generation")
+              exit(0)
+
+          img = Image.open(src).convert("RGBA")
+
+          sizes = {
+              "android/app/src/main/res/mipmap-mdpi/ic_launcher.png": 48,
+              "android/app/src/main/res/mipmap-hdpi/ic_launcher.png": 72,
+              "android/app/src/main/res/mipmap-xhdpi/ic_launcher.png": 96,
+              "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png": 144,
+              "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png": 192,
+          }
+
+          for path, size in sizes.items():
+              os.makedirs(os.path.dirname(path), exist_ok=True)
+              resized = img.resize((size, size), Image.LANCZOS)
+              # White background for non-transparent icons
+              bg = Image.new("RGBA", (size, size), (255, 255, 255, 255))
+              bg.paste(resized, (0, 0), resized)
+              bg.convert("RGB").save(path, "PNG")
+              print(f"Generated {path} ({size}x{size})")
+
+          print("All icons generated successfully")
+          PYEOF
+
       - name: Create firebase_options.dart placeholder
         run: |
-          cat > lib/firebase_options.dart << 'EOF'
+          if [ ! -f lib/firebase_options.dart ]; then
+            cat > lib/firebase_options.dart << 'EOF'
           import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
           import 'package:flutter/foundation.dart'
               show defaultTargetPlatform, kIsWeb, TargetPlatform;
@@ -67,6 +102,7 @@ jobs:
             );
           }
           EOF
+          fi
 
       - name: Build APK
         run: |
