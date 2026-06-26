@@ -13,7 +13,6 @@ if (localPropertiesFile.exists()) {
 def flutterVersionCode = localProperties.getProperty("flutter.versionCode") ?: "1"
 def flutterVersionName = localProperties.getProperty("flutter.versionName") ?: "1.0.0"
 
-// Optional signing config loaded from android/key.properties (see deployment guide).
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
@@ -23,12 +22,12 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.prynt.app"
     compileSdk = 34
-   ndkVersion = "25.1.8937393"
-
+    ndkVersion = "25.1.8937393"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -37,7 +36,7 @@ android {
 
     defaultConfig {
         applicationId = "com.prynt.app"
-        minSdk = 23          // required by firebase_messaging / flutter_local_notifications
+        minSdk = 23
         targetSdk = 34
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
@@ -57,8 +56,6 @@ android {
 
     buildTypes {
         release {
-            // Falls back to debug signing if no keystore is configured, so
-            // `flutter build apk` works out-of-the-box during evaluation.
             signingConfig = keystorePropertiesFile.exists()
                 ? signingConfigs.release
                 : signingConfigs.debug
@@ -74,13 +71,11 @@ flutter {
 }
 
 dependencies {
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"
     implementation "androidx.window:window:1.2.0"
     implementation "androidx.window:window-java:1.2.0"
 }
 
-// Apply Firebase Google Services plugin only when the config file is present,
-// so the project builds before Firebase is set up. Drop your
-// google-services.json into android/app/ to enable push notifications.
 if (file("google-services.json").exists()) {
     apply plugin: "com.google.gms.google-services"
 }
