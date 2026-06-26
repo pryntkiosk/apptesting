@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -13,7 +12,6 @@ import '../../../providers/request_provider.dart';
 
 class AdminRequestsScreen extends StatefulWidget {
   const AdminRequestsScreen({super.key});
-
   @override
   State<AdminRequestsScreen> createState() => _AdminRequestsScreenState();
 }
@@ -23,12 +21,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen>
   late final TabController _tabs;
   Timer? _poll;
 
-  static const _statuses = [
-    'pending',
-    'accepted',
-    'in_progress',
-    'completed'
-  ];
+  static const _statuses = ['pending', 'accepted', 'in_progress', 'completed'];
 
   @override
   void initState() {
@@ -39,27 +32,55 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen>
   }
 
   @override
-  void dispose() {
-    _poll?.cancel();
-    _tabs.dispose();
-    super.dispose();
-  }
+  void dispose() { _poll?.cancel(); _tabs.dispose(); super.dispose(); }
 
-  Future<void> _refresh() => context.read<RequestProvider>().loadForAdmin();
+  Future<void> _refresh() =>
+      context.read<RequestProvider>().loadForAdmin();
 
   @override
   Widget build(BuildContext context) {
     final p = context.watch<RequestProvider>();
+
     return Column(
       children: [
-        TabBar(
-          controller: _tabs,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          tabs: _statuses
-              .map((s) => Tab(text: Fmt.titleCase(s)))
-              .toList(),
+        // Tab bar with counts
+        Container(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: TabBar(
+            controller: _tabs,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            tabs: _statuses.map((s) {
+              final count = p.byStatus(s).length;
+              return Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(Fmt.titleCase(s)),
+                    if (count > 0) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: statusColor(s).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                        child: Text('$count',
+                            style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: statusColor(s))),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
         ),
+
         Expanded(
           child: TabBarView(
             controller: _tabs,
@@ -69,18 +90,19 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen>
               if (items.isEmpty) {
                 return RefreshIndicator(
                   onRefresh: _refresh,
-                  child: ListView(
-                    children: [
-                      const SizedBox(height: 100),
-                      EmptyView(
-                          icon: Icons.assignment_outlined,
-                          title: 'No ${Fmt.titleCase(s)} requests'),
-                    ],
-                  ),
+                  color: AppTheme.brand,
+                  child: ListView(children: [
+                    const SizedBox(height: 80),
+                    EmptyView(
+                      icon: statusIcon(s),
+                      title: 'No ${Fmt.titleCase(s)} requests',
+                    ),
+                  ]),
                 );
               }
               return RefreshIndicator(
                 onRefresh: _refresh,
+                color: AppTheme.brand,
                 child: ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: items.length,
@@ -103,73 +125,104 @@ class _AdminRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = statusColor(request.status);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                    request.isPaper
-                        ? Icons.description_outlined
-                        : Icons.water_drop_outlined,
-                    color: color),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(request.kioskName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w800, fontSize: 15)),
+    final r     = request;
+    final color = statusColor(r.status);
+    return PryntCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42, height: 42,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                StatusChip(
-                    label: Fmt.titleCase(request.status), color: color),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-                '${request.requestNumber} · ${Fmt.titleCase(request.alertType)} refill · ${Fmt.titleCase(request.source)}',
-                style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 13)),
-            if (request.address.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(Icons.location_on_outlined, size: 14),
-                  const SizedBox(width: 4),
-                  Expanded(
-                      child: Text(request.address,
-                          style: const TextStyle(fontSize: 13))),
-                ],
+                child: Icon(
+                  r.isPaper
+                      ? Icons.description_rounded
+                      : Icons.water_drop_rounded,
+                  color: color, size: 22,
+                ),
               ),
-            ],
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                const Icon(Icons.schedule, size: 14),
-                const SizedBox(width: 4),
-                Text(Fmt.relative(request.createdAt),
-                    style: const TextStyle(fontSize: 12)),
-                const Spacer(),
-                if (request.assignedName != null)
-                  Text('👤 ${request.assignedName}',
-                      style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w600)),
-              ],
-            ),
-            if (request.hasCoordinates) ...[
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: () => MapsLauncher.navigateTo(
-                    request.latitude!, request.longitude!),
-                icon: const Icon(Icons.navigation_outlined, size: 18),
-                label: const Text('Navigate'),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(r.kioskName,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 15)),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        AlertTypeBadge(isPaper: r.isPaper),
+                        const SizedBox(width: 6),
+                        Text(r.requestNumber,
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                                fontSize: 12)),
+                      ],
+                    ),
+                  ],
+                ),
               ),
+              StatusChip(label: Fmt.titleCase(r.status), color: color),
             ],
+          ),
+
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 10),
+
+          // Details
+          if (r.address.isNotEmpty)
+            InfoRow(
+                icon: Icons.location_on_outlined,
+                label: 'Address',
+                value: r.address),
+          InfoRow(
+              icon: Icons.access_time_rounded,
+              label: 'Created',
+              value: Fmt.dateTime(r.createdAt)),
+          if (r.acceptedAt != null)
+            InfoRow(
+                icon: Icons.thumb_up_rounded,
+                label: 'Accepted',
+                value: Fmt.dateTime(r.acceptedAt)),
+          if (r.assignedName != null)
+            InfoRow(
+                icon: Icons.person_outline,
+                label: 'Assigned to',
+                value: r.assignedName!),
+          if (r.isCompleted && r.completedAt != null)
+            InfoRow(
+                icon: Icons.check_circle_outline,
+                label: 'Completed',
+                value: Fmt.dateTime(r.completedAt)),
+
+          // Navigate button
+          if (r.hasCoordinates) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    MapsLauncher.navigateTo(r.latitude!, r.longitude!),
+                icon: const Icon(Icons.navigation_rounded, size: 16),
+                label: const Text('Navigate to kiosk'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(40),
+                ),
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
